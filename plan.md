@@ -1,5 +1,3 @@
-Date: 11/09/2026 | Time spent: 1 hr | Tokens used : none | What shipped: Created a map on how the AI agent will work step-by-step
-
 1. Problem:
 People often have a specific clothing design in mind — something they saw, imagined, or half-remember — but have no easy way to (1) visualize it concretely, (2) see it on themselves, or (3) actually acquire or make it. Existing tools solve fragments of this (Pinterest for inspiration, try-on apps for existing catalog items, Etsy/YouTube for DIY) but nothing connects "idea → visual → on you → real-world path to owning it."
 
