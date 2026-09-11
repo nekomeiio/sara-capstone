@@ -34,3 +34,72 @@ AI-driven implementation, human-directed architecture, using Claude Code as the 
 Image-gen APIs may not reliably produce "flat garment, no model" images from text alone — may need prompt engineering or a garment-specific model.
 Overlay quality without pose estimation may look bad enough to undermine the demo — worth prototyping early to validate feasibility before committing to it as MVP.
 Reverse image search APIs (Google Vision, etc.) may have cost/rate limits worth checking early.
+
+9. Architecture (linear pipeline, single path per stage):
+
+  1. Frontend — simple web app (React/Next.js or even a plain HTML+JS page for
+     MVP). Screens: input form → generated garment preview → photo upload →
+     composited try-on result.
+  2. Backend — thin API server (Node/Express or Python/FastAPI) that
+     orchestrates the 3 stages and proxies API keys (never call image-gen APIs
+     from the client).
+  3. Storage — object storage (S3/Cloudinary/local disk for MVP) for generated
+     images, user photos, composited outputs.
+
+  Pipeline stages:
+
+  - Input: text field, or Pinterest URL → scrape og:image / use Pinterest's
+    oEmbed/API to pull the image, then optionally run it through a vision model
+    to get a text description (for consistency, always end up with a text
+    prompt).
+  - Generation: send prompt to an image-gen API (DALL·E 3, Stability, or Gemini
+    image) with a fixed style prefix like "studio product photo, plain
+    background, full garment, front view" for consistent output.
+  - Try-on (pose-agnostic overlay): user uploads photo → run a
+    person-segmentation/pose model (e.g., Mediapipe Pose or a body-segmentation
+    model) to find torso bounding box/keypoints → warp/scale the generated
+    garment image onto that region with basic alpha blending (OpenCV/Pillow). No
+    real garment-body fitting — just crude affine placement.
+
+  Stack/commands to scaffold:
+
+  # backend
+  mkdir server && cd server
+  npm init -y
+  npm install express multer axios sharp dotenv
+  # or Python: pip install fastapi uvicorn python-multipart pillow mediapipe 
+  requests
+
+  # frontend
+  npx create-next-app@latest client
+  cd client && npm install axios
+
+  # image processing (pose/segmentation for overlay)
+  pip install mediapipe opencv-python pillow numpy
+
+  # env vars
+  echo "STABILITY_API_KEY=...\nOPENAI_API_KEY=..." > server/.env
+
+  Key API calls:
+  - Image gen: POST https://api.stability.ai/v2beta/stable-image/generate/core
+    or OpenAI images.generate
+  - Pinterest scrape: fetch page, parse og:image meta tag (no official easy API
+    for arbitrary pins)
+  - Overlay: local processing, no external call needed
+  
+  What to cut for MVP: no auth, no garment catalog/shopping links yet (stretch
+  goal #3 "acquire it" can just be a text tip like "search Etsy for:
+  <description>" via a static link-out), no true body-aware warping.
+
+  Want me to actually scaffold this (pick Next.js+FastAPI or Node) and start
+  writing the code?
+
+✻ Cogitated for 15s · done 3:55 PM
+  
+❯ give me a build log for this                                                  
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ No project scaffolded yet, so I'll set one up and write the build log into it
+  as a real, appendable devlog (not a hypothetical) — starting with the
+  planning/setup phase we've already done.
