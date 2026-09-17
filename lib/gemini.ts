@@ -10,8 +10,13 @@ import { SEASONS, WARDROBE_CATEGORIES } from "@/lib/constants";
 // requests to it 404. These are the current equivalents: a fast/cheap model
 // for literal vision tagging, a stronger model for creative reasoning.
 // Swap here if Google rotates model names again.
+//
+// Vision uses the "-lite" tier specifically: gemini-3.6-flash's free-tier
+// quota is only 20 requests/day/model, which real testing exhausts almost
+// immediately. flash-lite has a much more generous free quota and is exactly
+// the "cheap, fast" tier the plan calls for here anyway.
 export const GEMINI_MODELS = {
-  vision: "gemini-3.7-flash",
+  vision: "gemini-3.1-flash-lite",
   reasoning: "gemini-3.1-pro-preview",
 } as const;
 
@@ -84,6 +89,16 @@ export type WardrobeTaggingResult = {
   tags: string[];
 };
 
+// Google's own model-overload 503s showed up ~50% of the time in testing
+// against gemini-3.6-flash — this isn't hypothetical, so transient HTTP
+// errors get retried with backoff alongside the malformed-JSON case.
+const TRANSIENT_STATUS_CODES = new Set([429, 500, 503]);
+
+function isTransientError(error: unknown): boolean {
+  const status = (error as { status?: number } | null)?.status;
+  return typeof status === "number" && TRANSIENT_STATUS_CODES.has(status);
+}
+
 async function generateJson<T>(params: {
   model: string;
   contents: ReturnType<typeof createUserContent>;
@@ -91,20 +106,32 @@ async function generateJson<T>(params: {
   jsonSchema: unknown;
 }): Promise<T> {
   const ai = getClient();
+  const maxAttempts = 3;
   let lastError: unknown;
 
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const response = await ai.models.generateContent({
-      model: params.model,
-      contents: params.contents,
-      config: {
-        temperature: params.temperature,
-        responseMimeType: "application/json",
-        responseJsonSchema: params.jsonSchema,
-      },
-    });
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+    }
 
-    const text = response.text;
+    let text: string | undefined;
+    try {
+      const response = await ai.models.generateContent({
+        model: params.model,
+        contents: params.contents,
+        config: {
+          temperature: params.temperature,
+          responseMimeType: "application/json",
+          responseJsonSchema: params.jsonSchema,
+        },
+      });
+      text = response.text;
+    } catch (error) {
+      lastError = error;
+      if (isTransientError(error)) continue;
+      throw error;
+    }
+
     if (!text) {
       lastError = new Error("Gemini returned an empty response");
       continue;
@@ -118,7 +145,7 @@ async function generateJson<T>(params: {
   }
 
   throw new Error(
-    `Gemini returned malformed JSON after retry: ${
+    `Gemini call failed after ${maxAttempts} attempts: ${
       lastError instanceof Error ? lastError.message : String(lastError)
     }`,
   );
