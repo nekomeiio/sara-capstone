@@ -11,13 +11,18 @@ import { SEASONS, WARDROBE_CATEGORIES } from "@/lib/constants";
 // for literal vision tagging, a stronger model for creative reasoning.
 // Swap here if Google rotates model names again.
 //
-// Vision uses the "-lite" tier specifically: gemini-3.6-flash's free-tier
-// quota is only 20 requests/day/model, which real testing exhausts almost
-// immediately. flash-lite has a much more generous free quota and is exactly
-// the "cheap, fast" tier the plan calls for here anyway.
+// Both roles run on flash-lite for now, not the plan's original Pro model:
+// - vision: gemini-3.6-flash's free-tier quota is only 20 requests/day/model,
+//   which real testing exhausts almost immediately. flash-lite has a much
+//   more generous free quota and is exactly the "cheap, fast" tier the plan
+//   wants here anyway.
+// - reasoning: gemini-3.1-pro has ZERO free-tier quota — Pro tiers require
+//   billing enabled on the Cloud project behind the API key. Using flash-lite
+//   here trades some reasoning quality for working without billing set up.
+//   Swap back to "gemini-3.1-pro-preview" once billing is enabled.
 export const GEMINI_MODELS = {
   vision: "gemini-3.1-flash-lite",
-  reasoning: "gemini-3.1-pro-preview",
+  reasoning: "gemini-3.1-flash-lite",
 } as const;
 
 let client: GoogleGenAI | null = null;
@@ -163,5 +168,70 @@ export async function tagWardrobeItemImage(
     ]),
     temperature: 0.2,
     jsonSchema: WARDROBE_TAGGING_SCHEMA,
+  });
+}
+
+export type WardrobeContextItem = {
+  id: string;
+  category: string;
+  subcategory: string;
+  primaryColor: string;
+  secondaryColors: string[];
+  pattern: string;
+  materialGuess: string;
+  formality: number;
+  seasons: string[];
+  fitStyle: string;
+  tags: string[];
+};
+
+const OUTFIT_SUGGESTION_SCHEMA = {
+  type: "object",
+  properties: {
+    item_ids: {
+      type: "array",
+      items: { type: "string" },
+      minItems: 1,
+      description: "ids of the chosen items, copied exactly from the provided wardrobe list",
+    },
+    explanation: { type: "string", description: "1-3 sentences on why this outfit fits the request" },
+    confidence: { type: "string", enum: ["high", "medium", "low"] },
+  },
+  required: ["item_ids", "explanation", "confidence"],
+};
+
+export type OutfitSuggestionResult = {
+  item_ids: string[];
+  explanation: string;
+  confidence: "high" | "medium" | "low";
+};
+
+function buildOutfitPrompt(promptText: string, wardrobeItems: WardrobeContextItem[]): string {
+  return `You are a personal stylist choosing an outfit from the user's real wardrobe.
+
+The user's wardrobe (the ONLY items you may use) as JSON:
+${JSON.stringify(wardrobeItems)}
+
+The user's request: "${promptText}"
+
+Rules:
+- Choose item_ids ONLY from the "id" values in the wardrobe list above. Never invent an item or id.
+- Only use categories that actually exist in the wardrobe list — if there are no shoes listed, do not
+  suggest shoes.
+- Prefer a coherent, complete-feeling outfit (e.g. a top + bottom, or a dress, plus outerwear/shoes/
+  accessories if they fit and exist), but never fabricate items to fill a category.
+- explanation should be 1-3 sentences addressing how the outfit fits the request.
+- confidence should reflect how well the available wardrobe actually matches the request.`;
+}
+
+export async function generateOutfitSuggestion(
+  promptText: string,
+  wardrobeItems: WardrobeContextItem[],
+): Promise<OutfitSuggestionResult> {
+  return generateJson<OutfitSuggestionResult>({
+    model: GEMINI_MODELS.reasoning,
+    contents: createUserContent([createPartFromText(buildOutfitPrompt(promptText, wardrobeItems))]),
+    temperature: 0.7,
+    jsonSchema: OUTFIT_SUGGESTION_SCHEMA,
   });
 }
