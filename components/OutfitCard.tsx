@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import type { WardrobeItemDTO } from "@/lib/wardrobe";
 
 const CATEGORY_DISPLAY_ORDER = [
@@ -15,23 +16,44 @@ const CATEGORY_DISPLAY_ORDER = [
 ];
 
 type OutfitCardProps = {
+  suggestionId: string;
   items: WardrobeItemDTO[];
   explanation: string;
   confidence?: string | null;
+  noveltyNote?: string | null;
   onRegenerate: () => void;
   isRegenerating: boolean;
 };
 
 export default function OutfitCard({
+  suggestionId,
   items,
   explanation,
   confidence,
+  noveltyNote,
   onRegenerate,
   isRegenerating,
 }: OutfitCardProps) {
+  const [wornState, setWornState] = useState<"idle" | "saving" | "done">("idle");
+  const [error, setError] = useState<string | null>(null);
+
   const sortedItems = [...items].sort(
     (a, b) => CATEGORY_DISPLAY_ORDER.indexOf(a.category) - CATEGORY_DISPLAY_ORDER.indexOf(b.category),
   );
+
+  const handleMarkAsWorn = async () => {
+    setWornState("saving");
+    setError(null);
+    try {
+      const response = await fetch(`/api/outfits/worn/${suggestionId}/accept`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Couldn't mark this outfit as worn.");
+      setWornState("done");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't mark this outfit as worn.");
+      setWornState("idle");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-black/10 p-4 dark:border-white/10">
@@ -48,20 +70,22 @@ export default function OutfitCard({
 
       <p className="text-sm">{explanation}</p>
 
-      {confidence && (
+      {(confidence || noveltyNote) && (
         <span className="w-fit rounded-full bg-black/5 px-2 py-0.5 text-xs text-black/60 dark:bg-white/10 dark:text-white/60">
-          Confidence: {confidence}
+          {confidence ? `Confidence: ${confidence}` : noveltyNote}
         </span>
       )}
+
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       <div className="flex gap-2">
         <button
           type="button"
-          disabled
-          title="Coming in Phase 4"
+          onClick={handleMarkAsWorn}
+          disabled={wornState !== "idle"}
           className="flex-1 rounded-md border border-black/10 px-3 py-2 text-sm disabled:opacity-40 dark:border-white/10"
         >
-          Mark as Worn
+          {wornState === "done" ? "Marked as worn ✓" : wornState === "saving" ? "Saving…" : "Mark as Worn"}
         </button>
         <button
           type="button"

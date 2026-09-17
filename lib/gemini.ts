@@ -235,3 +235,71 @@ export async function generateOutfitSuggestion(
     jsonSchema: OUTFIT_SUGGESTION_SCHEMA,
   });
 }
+
+const TRY_NEW_SCHEMA = {
+  type: "object",
+  properties: {
+    item_ids: {
+      type: "array",
+      items: { type: "string" },
+      minItems: 1,
+      description: "ids of the chosen items, copied exactly from the provided wardrobe list",
+    },
+    explanation: { type: "string", description: "1-3 sentences on why this is a good outfit" },
+    novelty_note: { type: "string", description: "1 short sentence on what makes this pick fresh/different" },
+  },
+  required: ["item_ids", "explanation", "novelty_note"],
+};
+
+export type TryNewSuggestionResult = {
+  item_ids: string[];
+  explanation: string;
+  novelty_note: string;
+};
+
+function buildTryNewPrompt(
+  wardrobeItems: WardrobeContextItem[],
+  pastOutfitIdSets: string[][],
+  avoidItemIds?: string[],
+): string {
+  const avoidClause = avoidItemIds
+    ? `\nYour previous suggestion (ids: ${JSON.stringify(avoidItemIds)}) overlapped too much with something
+already worn. Propose a meaningfully different combination this time — swap out at least the pieces
+that caused the overlap.`
+    : "";
+
+  return `You are a personal stylist proposing a FRESH outfit the user hasn't worn recently, to help them
+rediscover underused pieces in their own wardrobe.
+
+The user's wardrobe (the ONLY items you may use) as JSON:
+${JSON.stringify(wardrobeItems)}
+
+Outfits the user has already worn (avoid closely repeating any of these combinations), as arrays of
+item ids:
+${JSON.stringify(pastOutfitIdSets)}
+${avoidClause}
+
+Rules:
+- Choose item_ids ONLY from the "id" values in the wardrobe list above. Never invent an item or id.
+- Only use categories that actually exist in the wardrobe list.
+- Prefer a coherent, complete-feeling outfit, but never fabricate items to fill a category.
+- Favor pieces that appear rarely or not at all in the past-outfits list above.
+- explanation should be 1-3 sentences on why this is a good outfit.
+- novelty_note should be one short sentence on what makes this pick fresh or different from what's
+  been worn before.`;
+}
+
+export async function generateTryNewOutfit(
+  wardrobeItems: WardrobeContextItem[],
+  pastOutfitIdSets: string[][],
+  avoidItemIds?: string[],
+): Promise<TryNewSuggestionResult> {
+  return generateJson<TryNewSuggestionResult>({
+    model: GEMINI_MODELS.reasoning,
+    contents: createUserContent([
+      createPartFromText(buildTryNewPrompt(wardrobeItems, pastOutfitIdSets, avoidItemIds)),
+    ]),
+    temperature: 0.7,
+    jsonSchema: TRY_NEW_SCHEMA,
+  });
+}

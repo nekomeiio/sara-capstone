@@ -9,50 +9,71 @@ type Suggestion = {
   suggestionId: string;
   items: WardrobeItemDTO[];
   explanation: string;
-  confidence: "high" | "medium" | "low";
+  confidence?: "high" | "medium" | "low" | null;
+  noveltyNote?: string | null;
 };
 
+type LastRequest = { kind: "prompt"; promptText: string } | { kind: "try-new" };
+
 export default function HomePage() {
-  const [lastPromptText, setLastPromptText] = useState("");
+  const [lastRequest, setLastRequest] = useState<LastRequest | null>(null);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isTryingNew, setIsTryingNew] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generate = async (promptText: string) => {
-    setIsGenerating(true);
+  const runGeneration = async (endpoint: string, body: object | undefined, request: LastRequest) => {
     setError(null);
-    setLastPromptText(promptText);
+    setLastRequest(request);
     try {
-      const response = await fetch("/api/generate/prompt", {
+      const response = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ promptText }),
+        headers: body ? { "Content-Type": "application/json" } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Couldn't generate an outfit.");
       setSuggestion(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't generate an outfit.");
-    } finally {
-      setIsGenerating(false);
     }
   };
+
+  const generateFromPrompt = async (promptText: string) => {
+    setIsGenerating(true);
+    await runGeneration("/api/generate/prompt", { promptText }, { kind: "prompt", promptText });
+    setIsGenerating(false);
+  };
+
+  const generateTryNew = async () => {
+    setIsTryingNew(true);
+    await runGeneration("/api/generate/try-new", undefined, { kind: "try-new" });
+    setIsTryingNew(false);
+  };
+
+  const regenerate = () => {
+    if (!lastRequest) return;
+    if (lastRequest.kind === "prompt") generateFromPrompt(lastRequest.promptText);
+    else generateTryNew();
+  };
+
+  const isBusy = isGenerating || isTryingNew;
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">What are you wearing today?</h1>
 
-      <PromptBox onSubmit={generate} isGenerating={isGenerating} />
+      <PromptBox onSubmit={generateFromPrompt} isGenerating={isGenerating} />
 
       <div className="flex items-center gap-3">
         <span className="text-sm text-black/60 dark:text-white/60">or</span>
         <button
           type="button"
-          disabled
-          title="Coming in Phase 4"
+          onClick={generateTryNew}
+          disabled={isBusy}
           className="w-fit rounded-md border border-black/10 px-4 py-2 text-sm disabled:opacity-40 dark:border-white/10"
         >
-          Try Something New
+          {isTryingNew ? "Finding something…" : "Try Something New"}
         </button>
       </div>
 
@@ -60,11 +81,13 @@ export default function HomePage() {
 
       {suggestion && (
         <OutfitCard
+          suggestionId={suggestion.suggestionId}
           items={suggestion.items}
           explanation={suggestion.explanation}
           confidence={suggestion.confidence}
-          onRegenerate={() => generate(lastPromptText)}
-          isRegenerating={isGenerating}
+          noveltyNote={suggestion.noveltyNote}
+          onRegenerate={regenerate}
+          isRegenerating={isBusy}
         />
       )}
     </div>

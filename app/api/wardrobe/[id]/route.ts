@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@/app/generated/prisma/client";
 import { WARDROBE_CATEGORIES } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { deleteUploadedImage } from "@/lib/uploads";
@@ -54,7 +55,13 @@ export async function DELETE(
     const item = await prisma.wardrobeItem.delete({ where: { id } });
     await deleteUploadedImage(item.imageUrl);
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      return NextResponse.json(
+        { error: "Can't delete — this item is part of your worn-outfit history." },
+        { status: 409 },
+      );
+    }
     return NextResponse.json({ error: "Wardrobe item not found." }, { status: 404 });
   }
 }
