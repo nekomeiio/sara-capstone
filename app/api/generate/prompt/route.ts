@@ -25,12 +25,14 @@ export async function POST(request: Request) {
   }
 
   const dtoById = new Map(wardrobeItems.map((item) => [item.id, serializeWardrobeItem(item)]));
+  const styleProfile = await prisma.styleProfile.findUnique({ where: { id: "singleton" } });
 
   let suggestion;
   try {
     suggestion = await generateOutfitSuggestion(
       promptText,
       Array.from(dtoById.values()).map(toWardrobeContextItem),
+      styleProfile?.styleSummary,
     );
   } catch {
     return NextResponse.json(

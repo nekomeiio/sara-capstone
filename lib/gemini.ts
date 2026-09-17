@@ -206,9 +206,18 @@ export type OutfitSuggestionResult = {
   confidence: "high" | "medium" | "low";
 };
 
-function buildOutfitPrompt(promptText: string, wardrobeItems: WardrobeContextItem[]): string {
-  return `You are a personal stylist choosing an outfit from the user's real wardrobe.
+function buildOutfitPrompt(
+  promptText: string,
+  wardrobeItems: WardrobeContextItem[],
+  styleSummary?: string | null,
+): string {
+  const styleClause = styleSummary
+    ? `\nThe user's overall style profile, derived from their saved inspiration images: "${styleSummary}"
+Let this inform the tone and choice of your outfit, without ignoring their specific request below.\n`
+    : "";
 
+  return `You are a personal stylist choosing an outfit from the user's real wardrobe.
+${styleClause}
 The user's wardrobe (the ONLY items you may use) as JSON:
 ${JSON.stringify(wardrobeItems)}
 
@@ -227,10 +236,13 @@ Rules:
 export async function generateOutfitSuggestion(
   promptText: string,
   wardrobeItems: WardrobeContextItem[],
+  styleSummary?: string | null,
 ): Promise<OutfitSuggestionResult> {
   return generateJson<OutfitSuggestionResult>({
     model: GEMINI_MODELS.reasoning,
-    contents: createUserContent([createPartFromText(buildOutfitPrompt(promptText, wardrobeItems))]),
+    contents: createUserContent([
+      createPartFromText(buildOutfitPrompt(promptText, wardrobeItems, styleSummary)),
+    ]),
     temperature: 0.7,
     jsonSchema: OUTFIT_SUGGESTION_SCHEMA,
   });
@@ -301,5 +313,124 @@ export async function generateTryNewOutfit(
     ]),
     temperature: 0.7,
     jsonSchema: TRY_NEW_SCHEMA,
+  });
+}
+
+const INSPIRATION_EXTRACTION_SCHEMA = {
+  type: "object",
+  properties: {
+    aestheticLabels: {
+      type: "array",
+      items: { type: "string" },
+      description: "short style/aesthetic descriptors, e.g. 'minimalist', 'streetwear', 'cottagecore'",
+    },
+    colorPalette: { type: "array", items: { type: "string" }, description: "dominant colors visible" },
+    silhouetteNotes: { type: "string", description: "notable silhouettes/fits/proportions" },
+    formalityRangeMin: { type: "integer", minimum: 1, maximum: 5 },
+    formalityRangeMax: { type: "integer", minimum: 1, maximum: 5 },
+    moodDescription: { type: "string", description: "1-2 sentence overall mood/vibe" },
+  },
+  required: [
+    "aestheticLabels",
+    "colorPalette",
+    "silhouetteNotes",
+    "formalityRangeMin",
+    "formalityRangeMax",
+    "moodDescription",
+  ],
+};
+
+const INSPIRATION_EXTRACTION_PROMPT = `You are analyzing a fashion inspiration image (an outfit photo, mood
+board, or style reference) to extract its style attributes for a personal styling app.
+Fill in every field of the schema based on what you see.
+formalityRangeMin/Max describe the plausible formality range this image's style spans, as integers from
+1 (very casual) to 5 (very formal) — most images should have a narrow range (e.g. 2-3), but a versatile
+look can span wider.`;
+
+export type InspirationExtractionResult = {
+  aestheticLabels: string[];
+  colorPalette: string[];
+  silhouetteNotes: string;
+  formalityRangeMin: number;
+  formalityRangeMax: number;
+  moodDescription: string;
+};
+
+export async function extractInspirationStyle(
+  imageBase64: string,
+  mimeType: string,
+): Promise<InspirationExtractionResult> {
+  return generateJson<InspirationExtractionResult>({
+    model: GEMINI_MODELS.vision,
+    contents: createUserContent([
+      createPartFromText(INSPIRATION_EXTRACTION_PROMPT),
+      createPartFromBase64(imageBase64, mimeType),
+    ]),
+    temperature: 0.2,
+    jsonSchema: INSPIRATION_EXTRACTION_SCHEMA,
+  });
+}
+
+export type InspirationContextItem = {
+  aestheticLabels: string[];
+  colorPalette: string[];
+  silhouetteNotes: string;
+  formalityRangeMin: number;
+  formalityRangeMax: number;
+  moodDescription: string;
+};
+
+const STYLE_PROFILE_SCHEMA = {
+  type: "object",
+  properties: {
+    dominantAesthetics: { type: "array", items: { type: "string" } },
+    preferredColors: { type: "array", items: { type: "string" } },
+    formalityComfortMin: { type: "integer", minimum: 1, maximum: 5 },
+    formalityComfortMax: { type: "integer", minimum: 1, maximum: 5 },
+    styleSummary: {
+      type: "string",
+      description: "2-4 sentences describing the user's overall aesthetic, for direct use as styling context",
+    },
+  },
+  required: [
+    "dominantAesthetics",
+    "preferredColors",
+    "formalityComfortMin",
+    "formalityComfortMax",
+    "styleSummary",
+  ],
+};
+
+export type StyleProfileMergeResult = {
+  dominantAesthetics: string[];
+  preferredColors: string[];
+  formalityComfortMin: number;
+  formalityComfortMax: number;
+  styleSummary: string;
+};
+
+function buildStyleProfilePrompt(inspirationImages: InspirationContextItem[]): string {
+  return `You are synthesizing a single overall style profile from a collection of fashion inspiration
+images the user has saved.
+
+Extracted attributes from each inspiration image, as JSON:
+${JSON.stringify(inspirationImages)}
+
+Merge these into one coherent style profile:
+- dominantAesthetics: the aesthetic labels that recur most, deduplicated
+- preferredColors: the colors that recur most across the palettes, deduplicated
+- formalityComfortMin/Max: the overall formality range this collection suggests (1-5)
+- styleSummary: 2-4 sentences describing the user's overall aesthetic in a way a stylist could use
+  directly when picking outfits for them`;
+}
+
+export async function mergeStyleProfile(
+  inspirationImages: InspirationContextItem[],
+): Promise<StyleProfileMergeResult> {
+  return generateJson<StyleProfileMergeResult>({
+    model: GEMINI_MODELS.reasoning,
+    contents: createUserContent([createPartFromText(buildStyleProfilePrompt(inspirationImages))]),
+    temperature: 0.5,
+    jsonSchema: STYLE_PROFILE_SCHEMA,
   });
 }
