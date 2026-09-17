@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
+import HistoryCalendar from "@/components/HistoryCalendar";
 import LogWornOutfitForm from "@/components/LogWornOutfitForm";
 import type { WornOutfitDTO } from "@/lib/outfits";
 
@@ -11,7 +11,7 @@ export default function HistoryPage() {
 
   useEffect(() => {
     let ignore = false;
-    fetch("/api/outfits/worn")
+    fetch("/api/outfits/worn?limit=200")
       .then((response) => response.json())
       .then((data) => {
         if (!ignore) setWornOutfits(data);
@@ -32,32 +32,16 @@ export default function HistoryPage() {
 
       {isLoading ? (
         <p className="text-sm text-black/40 dark:text-white/40">Loading…</p>
-      ) : wornOutfits.length === 0 ? (
-        <p className="text-sm text-black/40 dark:text-white/40">
-          No worn outfits logged yet — the calendar view comes in Phase 6.
-        </p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {wornOutfits.map((outfit) => (
-            <div
-              key={outfit.id}
-              className="flex flex-col gap-2 rounded-lg border border-black/10 p-3 dark:border-white/10"
-            >
-              <div className="flex items-center justify-between text-xs text-black/60 dark:text-white/60">
-                <span>{new Date(outfit.dateWorn).toLocaleDateString()}</span>
-                <span>{outfit.sourceType === "generated_accepted" ? "AI suggestion" : "Logged manually"}</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {outfit.items.map((item) => (
-                  <div key={item.id} className="relative h-14 w-14 overflow-hidden rounded-md">
-                    <Image src={item.imageUrl} alt={item.subcategory} fill className="object-cover" />
-                  </div>
-                ))}
-              </div>
-              {outfit.contextNote && <p className="text-sm">{outfit.contextNote}</p>}
-            </div>
-          ))}
-        </div>
+        <>
+          {wornOutfits.length === 0 && (
+            <p className="text-sm text-black/40 dark:text-white/40">
+              No worn outfits logged yet — log one above, or accept an AI suggestion, to start building
+              your history.
+            </p>
+          )}
+          <HistoryCalendar wornOutfits={wornOutfits} />
+        </>
       )}
     </div>
   );

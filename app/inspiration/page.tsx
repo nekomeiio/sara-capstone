@@ -3,15 +3,16 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import UploadDropzone from "@/components/UploadDropzone";
+import { useToast } from "@/components/ToastProvider";
 import type { InspirationImageDTO } from "@/lib/inspiration";
 import type { StyleProfileDTO } from "@/lib/styleProfile";
 
 export default function InspirationPage() {
+  const { showToast } = useToast();
   const [images, setImages] = useState<InspirationImageDTO[]>([]);
   const [profile, setProfile] = useState<StyleProfileDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRegenerating, setIsRegenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -35,18 +36,17 @@ export default function InspirationPage() {
 
   const regenerateProfile = useCallback(async () => {
     setIsRegenerating(true);
-    setError(null);
     try {
       const response = await fetch("/api/style-profile/regenerate", { method: "POST" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Couldn't regenerate style profile.");
       setProfile(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't regenerate style profile.");
+      showToast(err instanceof Error ? err.message : "Couldn't regenerate style profile.");
     } finally {
       setIsRegenerating(false);
     }
-  }, []);
+  }, [showToast]);
 
   const handleUploaded = (result: unknown) => {
     setImages((prev) => [result as InspirationImageDTO, ...prev]);
@@ -69,8 +69,6 @@ export default function InspirationPage() {
         onUploaded={handleUploaded}
         label="Drag & drop a style inspiration photo, or click to browse"
       />
-
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       {profile && (
         <div className="flex flex-col gap-2 rounded-lg border border-black/10 p-4 dark:border-white/10">

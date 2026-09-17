@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useToast } from "@/components/ToastProvider";
 
 type UploadDropzoneProps = {
   endpoint: string;
@@ -16,12 +17,11 @@ export default function UploadDropzone({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const upload = useCallback(
     async (file: File) => {
       setIsUploading(true);
-      setError(null);
       try {
         const formData = new FormData();
         formData.append("file", file);
@@ -32,12 +32,12 @@ export default function UploadDropzone({
         }
         onUploaded(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Upload failed.");
+        showToast(err instanceof Error ? err.message : "Upload failed.");
       } finally {
         setIsUploading(false);
       }
     },
-    [endpoint, onUploaded],
+    [endpoint, onUploaded, showToast],
   );
 
   return (
@@ -78,7 +78,6 @@ export default function UploadDropzone({
           {isUploading ? "Analyzing image…" : label}
         </p>
       </div>
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }

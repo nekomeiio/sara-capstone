@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { todayDateKey } from "@/lib/dates";
 import type { WardrobeItemDTO } from "@/lib/wardrobe";
 import type { WornOutfitDTO } from "@/lib/outfits";
 
@@ -9,14 +10,10 @@ type LogWornOutfitFormProps = {
   onLogged: (wornOutfit: WornOutfitDTO) => void;
 };
 
-function todayAsDateInputValue(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export default function LogWornOutfitForm({ onLogged }: LogWornOutfitFormProps) {
   const [wardrobeItems, setWardrobeItems] = useState<WardrobeItemDTO[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [dateWorn, setDateWorn] = useState(todayAsDateInputValue());
+  const [dateWorn, setDateWorn] = useState(todayDateKey());
   const [contextNote, setContextNote] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
