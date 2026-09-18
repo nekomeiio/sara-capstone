@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import HistoryCalendar from "@/components/HistoryCalendar";
 import LogWornOutfitForm from "@/components/LogWornOutfitForm";
+import { todayDateKey } from "@/lib/dates";
 import type { WornOutfitDTO } from "@/lib/outfits";
 
 export default function HistoryPage() {
   const [wornOutfits, setWornOutfits] = useState<WornOutfitDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [logDate, setLogDate] = useState(todayDateKey());
 
   useEffect(() => {
     let ignore = false;
@@ -39,7 +41,11 @@ export default function HistoryPage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Worn history</h1>
 
-      <LogWornOutfitForm onLogged={(wornOutfit) => setWornOutfits((prev) => [wornOutfit, ...prev])} />
+      <LogWornOutfitForm
+        dateWorn={logDate}
+        onDateChange={setLogDate}
+        onLogged={(wornOutfit) => setWornOutfits((prev) => [wornOutfit, ...prev])}
+      />
 
       {isLoading ? (
         <p className="text-sm text-black/40 dark:text-white/40">Loading…</p>
@@ -51,7 +57,7 @@ export default function HistoryPage() {
               your history.
             </p>
           )}
-          <HistoryCalendar wornOutfits={wornOutfits} onDelete={handleDelete} />
+          <HistoryCalendar wornOutfits={wornOutfits} onDelete={handleDelete} onDaySelect={setLogDate} />
         </>
       )}
     </div>

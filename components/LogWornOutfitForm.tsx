@@ -2,18 +2,18 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { todayDateKey } from "@/lib/dates";
 import type { WardrobeItemDTO } from "@/lib/wardrobe";
 import type { WornOutfitDTO } from "@/lib/outfits";
 
 type LogWornOutfitFormProps = {
+  dateWorn: string;
+  onDateChange: (date: string) => void;
   onLogged: (wornOutfit: WornOutfitDTO) => void;
 };
 
-export default function LogWornOutfitForm({ onLogged }: LogWornOutfitFormProps) {
+export default function LogWornOutfitForm({ dateWorn, onDateChange, onLogged }: LogWornOutfitFormProps) {
   const [wardrobeItems, setWardrobeItems] = useState<WardrobeItemDTO[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [dateWorn, setDateWorn] = useState(todayDateKey());
   const [contextNote, setContextNote] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +99,7 @@ export default function LogWornOutfitForm({ onLogged }: LogWornOutfitFormProps) 
           <input
             type="date"
             value={dateWorn}
-            onChange={(e) => setDateWorn(e.target.value)}
+            onChange={(e) => onDateChange(e.target.value)}
             className="rounded-md border border-black/10 p-2 text-sm dark:border-white/10 dark:bg-neutral-800"
           />
         </label>

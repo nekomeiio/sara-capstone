@@ -10,9 +10,10 @@ const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 type HistoryCalendarProps = {
   wornOutfits: WornOutfitDTO[];
   onDelete: (id: string) => Promise<boolean>;
+  onDaySelect?: (dateKey: string) => void;
 };
 
-export default function HistoryCalendar({ wornOutfits, onDelete }: HistoryCalendarProps) {
+export default function HistoryCalendar({ wornOutfits, onDelete, onDaySelect }: HistoryCalendarProps) {
   const [monthCursor, setMonthCursor] = useState(() => {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
@@ -101,9 +102,11 @@ export default function HistoryCalendar({ wornOutfits, onDelete }: HistoryCalend
             <button
               key={key}
               type="button"
-              onClick={() => setSelectedDateKey(dayOutfits.length > 0 ? key : null)}
-              disabled={dayOutfits.length === 0}
-              className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-md border text-xs disabled:cursor-default ${
+              onClick={() => {
+                setSelectedDateKey(key);
+                onDaySelect?.(key);
+              }}
+              className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-md border text-xs ${
                 isSelected
                   ? "border-black dark:border-white"
                   : isToday
@@ -136,6 +139,11 @@ export default function HistoryCalendar({ wornOutfits, onDelete }: HistoryCalend
               Close
             </button>
           </div>
+          {selectedOutfits.length === 0 && (
+            <p className="text-xs text-black/40 dark:text-white/40">
+              No outfits logged for this day yet — pick items above and log one for this date.
+            </p>
+          )}
           {selectedOutfits.map((outfit) => (
             <div key={outfit.id} className="flex flex-col gap-2">
               <div className="flex flex-wrap gap-2">

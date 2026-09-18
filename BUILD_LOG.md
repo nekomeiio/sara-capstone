@@ -2,3 +2,4 @@
 | Date | Time Spent | Rough Tokens Used | What Shipped |
 |------|-----------|--------------------|--------------|
 | 2026-09-11 | 1h | ~1.3k | Set up repo structure, architecutre added plan.md and BUILD_LOG.md |
+| 2026-09-17 – 2026-09-18 | 6h | ~400k | Phases 1-6: Next.js/Prisma/SQLite scaffold; wardrobe upload + Gemini vision tagging; prompt-based outfit generator; Try Something New with dedup/fallback + worn-history logging; inspiration upload + style profile merged into prompts; history calendar, empty states, error toasts. Verified end-to-end against the live Gemini API throughout, which surfaced real issues fixed along the way: swapped retired/quota-limited Gemini models for working ones, fixed a Next.js Turbopack bug that silently broke uploaded-photo display, fixed a timezone bug in the worn-outfit date picker, and added a delete option for logged outfits. |
