@@ -24,6 +24,17 @@ export default function HistoryPage() {
     };
   }, []);
 
+  const handleDelete = async (id: string): Promise<boolean> => {
+    const previous = wornOutfits;
+    setWornOutfits((prev) => prev.filter((outfit) => outfit.id !== id));
+    const response = await fetch(`/api/outfits/worn/${id}`, { method: "DELETE" });
+    if (!response.ok) {
+      setWornOutfits(previous);
+      return false;
+    }
+    return true;
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Worn history</h1>
@@ -40,7 +51,7 @@ export default function HistoryPage() {
               your history.
             </p>
           )}
-          <HistoryCalendar wornOutfits={wornOutfits} />
+          <HistoryCalendar wornOutfits={wornOutfits} onDelete={handleDelete} />
         </>
       )}
     </div>

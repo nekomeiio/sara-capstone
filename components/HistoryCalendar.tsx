@@ -9,14 +9,16 @@ const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 type HistoryCalendarProps = {
   wornOutfits: WornOutfitDTO[];
+  onDelete: (id: string) => Promise<boolean>;
 };
 
-export default function HistoryCalendar({ wornOutfits }: HistoryCalendarProps) {
+export default function HistoryCalendar({ wornOutfits, onDelete }: HistoryCalendarProps) {
   const [monthCursor, setMonthCursor] = useState(() => {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
   });
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
   const outfitsByDate = useMemo(() => {
     const map = new Map<string, WornOutfitDTO[]>();
@@ -39,6 +41,19 @@ export default function HistoryCalendar({ wornOutfits }: HistoryCalendarProps) {
 
   const todayKey = todayDateKey();
   const selectedOutfits = selectedDateKey ? (outfitsByDate.get(selectedDateKey) ?? []) : [];
+
+  const handleDelete = async (outfitId: string) => {
+    setDeletingIds((prev) => new Set(prev).add(outfitId));
+    const success = await onDelete(outfitId);
+    if (success && selectedOutfits.length <= 1) {
+      setSelectedDateKey(null);
+    }
+    setDeletingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(outfitId);
+      return next;
+    });
+  };
 
   const goToPreviousMonth = () =>
     setMonthCursor((prev) => (prev.month === 0 ? { year: prev.year - 1, month: 11 } : { year: prev.year, month: prev.month - 1 }));
@@ -130,10 +145,20 @@ export default function HistoryCalendar({ wornOutfits }: HistoryCalendarProps) {
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-black/60 dark:text-white/60">
-                {outfit.sourceType === "generated_accepted" ? "AI suggestion" : "Logged manually"}
-                {outfit.contextNote ? ` · ${outfit.contextNote}` : ""}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-black/60 dark:text-white/60">
+                  {outfit.sourceType === "generated_accepted" ? "AI suggestion" : "Logged manually"}
+                  {outfit.contextNote ? ` · ${outfit.contextNote}` : ""}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(outfit.id)}
+                  disabled={deletingIds.has(outfit.id)}
+                  className="text-xs text-red-600 disabled:opacity-50 dark:text-red-400"
+                >
+                  {deletingIds.has(outfit.id) ? "Deleting…" : "Delete"}
+                </button>
+              </div>
             </div>
           ))}
         </div>
