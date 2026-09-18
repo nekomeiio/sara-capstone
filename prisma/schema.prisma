@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model WardrobeItem {
+  id              String       @id @default(cuid())
+  imageUrl        String
+  category        String // top | bottom | dress | outerwear | shoes | accessory | bag | other
+  subcategory     String
+  primaryColor    String
+  secondaryColors String // stored as comma-separated or JSON string
+  pattern         String
+  materialGuess   String
+  formality       Int // 1-5
+  seasons         String // JSON array as string: ["summer","fall"]
+  fitStyle        String
+  tags            String // JSON array as string
+  userConfirmed   Boolean      @default(false) // true once user reviews/edits Gemini's tags
+  createdAt       DateTime     @default(now())
+  outfitLinks     OutfitItem[]
+}
+
+model WornOutfit {
+  id          String       @id @default(cuid())
+  dateWorn    DateTime
+  contextNote String? // "date night", "work", etc — optional
+  sourceType  String // "logged_manually" | "generated_accepted"
+  createdAt   DateTime     @default(now())
+  items       OutfitItem[]
+}
+
+model OutfitItem {
+  id             String       @id @default(cuid())
+  wardrobeItemId String
+  wardrobeItem   WardrobeItem @relation(fields: [wardrobeItemId], references: [id])
+  wornOutfitId   String
+  wornOutfit     WornOutfit   @relation(fields: [wornOutfitId], references: [id])
+}
+
+model InspirationImage {
+  id                String   @id @default(cuid())
+  imageUrl          String
+  aestheticLabels   String // JSON array as string
+  colorPalette      String // JSON array as string
+  silhouetteNotes   String
+  formalityRangeMin Int
+  formalityRangeMax Int
+  moodDescription   String
+  createdAt         DateTime @default(now())
+}
+
+model StyleProfile {
+  id                  String   @id @default("singleton") // one row, single-user MVP
+  dominantAesthetics  String // JSON array as string
+  preferredColors     String // JSON array as string
+  formalityComfortMin Int
+  formalityComfortMax Int
+  styleSummary        String
+  lastGeneratedAt     DateTime @updatedAt
+}
+
+model GeneratedSuggestion {
+  id          String   @id @default(cuid())
+  triggerType String // "prompt" | "try_something_new"
+  promptText  String? // null for try_something_new
+  itemIdsJson String // JSON array of WardrobeItem ids as string
+  explanation String
+  confidence  String? // "high" | "medium" | "low" — prompt mode only
+  noveltyNote String? // try_something_new mode only
+  wasAccepted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
