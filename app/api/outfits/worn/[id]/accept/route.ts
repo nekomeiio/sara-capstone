@@ -4,9 +4,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(
   _request: NextRequest,
-  { params }: { params: Promise<{ suggestionId: string }> },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const { suggestionId } = await params;
+  const suggestionId = (await params).id;
 
   const suggestion = await prisma.generatedSuggestion.findUnique({ where: { id: suggestionId } });
   if (!suggestion) {
