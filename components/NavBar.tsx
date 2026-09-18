@@ -16,7 +16,7 @@ export default function NavBar() {
   return (
     <nav className="border-b border-black/10 dark:border-white/10">
       <div className="mx-auto flex max-w-4xl items-center gap-6 px-4 py-4">
-        <span className="font-semibold">Outfit Picker</span>
+        <span className="font-semibold">Style Me</span>
         <div className="flex gap-4 text-sm">
           {LINKS.map((link) => {
             const isActive =

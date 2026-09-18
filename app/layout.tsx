@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Outfit Picker",
+  title: "Style Me",
   description: "Gemini-powered outfit picker agent",
 };
 
