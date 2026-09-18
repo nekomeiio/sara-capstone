@@ -4,19 +4,23 @@ import { safeParseStringArray } from "@/lib/json";
 
 export type WardrobeItemDTO = Omit<
   WardrobeItem,
-  "secondaryColors" | "seasons" | "tags"
+  "secondaryColors" | "seasons" | "tags" | "imageData" | "imageMimeType"
 > & {
   secondaryColors: string[];
   seasons: string[];
   tags: string[];
+  imageUrl: string;
 };
 
 export function serializeWardrobeItem(item: WardrobeItem): WardrobeItemDTO {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { imageData, imageMimeType, ...rest } = item;
   return {
-    ...item,
+    ...rest,
     secondaryColors: safeParseStringArray(item.secondaryColors),
     seasons: safeParseStringArray(item.seasons),
     tags: safeParseStringArray(item.tags),
+    imageUrl: `/api/wardrobe/${item.id}/image`,
   };
 }
 

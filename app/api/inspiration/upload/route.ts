@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { extractInspirationStyle } from "@/lib/gemini";
 import { serializeInspirationImage } from "@/lib/inspiration";
 import { prisma } from "@/lib/prisma";
-import { deleteUploadedImage, saveUploadedImage } from "@/lib/uploads";
+import { readUploadedImage } from "@/lib/uploads";
 
 export async function POST(request: Request) {
   let formData: FormData;
@@ -17,12 +17,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No image file provided." }, { status: 400 });
   }
 
-  let saved: Awaited<ReturnType<typeof saveUploadedImage>>;
+  let saved: Awaited<ReturnType<typeof readUploadedImage>>;
   try {
-    saved = await saveUploadedImage(file);
+    saved = await readUploadedImage(file);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Couldn't save image." },
+      { error: error instanceof Error ? error.message : "Couldn't read image." },
       { status: 400 },
     );
   }
@@ -31,7 +31,6 @@ export async function POST(request: Request) {
   try {
     extracted = await extractInspirationStyle(saved.buffer.toString("base64"), saved.mimeType);
   } catch {
-    await deleteUploadedImage(saved.imageUrl);
     return NextResponse.json(
       { error: "Couldn't analyze this image. Please try again." },
       { status: 502 },
@@ -40,7 +39,8 @@ export async function POST(request: Request) {
 
   const item = await prisma.inspirationImage.create({
     data: {
-      imageUrl: saved.imageUrl,
+      imageData: saved.buffer,
+      imageMimeType: saved.mimeType,
       aestheticLabels: JSON.stringify(extracted.aestheticLabels),
       colorPalette: JSON.stringify(extracted.colorPalette),
       silhouetteNotes: extracted.silhouetteNotes,

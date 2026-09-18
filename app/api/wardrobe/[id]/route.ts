@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@/app/generated/prisma/client";
 import { WARDROBE_CATEGORIES } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
-import { deleteUploadedImage } from "@/lib/uploads";
 import { serializeWardrobeItem } from "@/lib/wardrobe";
 
 const STRING_FIELDS = [
@@ -52,8 +51,7 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const item = await prisma.wardrobeItem.delete({ where: { id } });
-    await deleteUploadedImage(item.imageUrl);
+    await prisma.wardrobeItem.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
