@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import { dateKeyFromIso, formatDateKey, localDateFromKey, todayDateKey } from "@/lib/dates";
+import { dateKeyFromIso, formatDateKey, localDateFromKey } from "@/lib/dates";
 import type { WornOutfitDTO } from "@/lib/outfits";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -40,7 +40,6 @@ export default function HistoryCalendar({ wornOutfits, onDelete, onDaySelect }: 
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
-  const todayKey = todayDateKey();
   const selectedOutfits = selectedDateKey ? (outfitsByDate.get(selectedDateKey) ?? []) : [];
 
   const handleDelete = async (outfitId: string) => {
@@ -95,7 +94,6 @@ export default function HistoryCalendar({ wornOutfits, onDelete, onDaySelect }: 
 
           const key = formatDateKey(year, month, day);
           const dayOutfits = outfitsByDate.get(key) ?? [];
-          const isToday = key === todayKey;
           const isSelected = key === selectedDateKey;
 
           return (
@@ -107,11 +105,7 @@ export default function HistoryCalendar({ wornOutfits, onDelete, onDaySelect }: 
                 onDaySelect?.(key);
               }}
               className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-md border text-xs ${
-                isSelected
-                  ? "border-black dark:border-white"
-                  : isToday
-                    ? "border-black/40 dark:border-white/40"
-                    : "border-black/5 dark:border-white/5"
+                isSelected ? "border-black dark:border-white" : "border-black/5 dark:border-white/5"
               }`}
             >
               <span>{day}</span>
