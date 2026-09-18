@@ -2,16 +2,23 @@ import type { InspirationImage } from "@/app/generated/prisma/client";
 import type { InspirationContextItem } from "@/lib/gemini";
 import { safeParseStringArray } from "@/lib/json";
 
-export type InspirationImageDTO = Omit<InspirationImage, "aestheticLabels" | "colorPalette"> & {
+export type InspirationImageDTO = Omit<
+  InspirationImage,
+  "aestheticLabels" | "colorPalette" | "imageData" | "imageMimeType"
+> & {
   aestheticLabels: string[];
   colorPalette: string[];
+  imageUrl: string;
 };
 
 export function serializeInspirationImage(item: InspirationImage): InspirationImageDTO {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { imageData, imageMimeType, ...rest } = item;
   return {
-    ...item,
+    ...rest,
     aestheticLabels: safeParseStringArray(item.aestheticLabels),
     colorPalette: safeParseStringArray(item.colorPalette),
+    imageUrl: `/api/inspiration/${item.id}/image`,
   };
 }
 

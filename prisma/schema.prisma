@@ -14,7 +14,8 @@ datasource db {
 
 model WardrobeItem {
   id              String       @id @default(cuid())
-  imageUrl        String
+  imageData       Bytes
+  imageMimeType   String
   category        String // top | bottom | dress | outerwear | shoes | accessory | bag | other
   subcategory     String
   primaryColor    String
@@ -49,7 +50,8 @@ model OutfitItem {
 
 model InspirationImage {
   id                String   @id @default(cuid())
-  imageUrl          String
+  imageData         Bytes
+  imageMimeType     String
   aestheticLabels   String // JSON array as string
   colorPalette      String // JSON array as string
   silhouetteNotes   String
