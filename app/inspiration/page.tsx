@@ -13,6 +13,7 @@ export default function InspirationPage() {
   const [profile, setProfile] = useState<StyleProfileDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isDeletingProfile, setIsDeletingProfile] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -60,6 +61,20 @@ export default function InspirationPage() {
     if (!response.ok) setImages(previous);
   };
 
+  const handleDeleteProfile = async () => {
+    setIsDeletingProfile(true);
+    try {
+      const response = await fetch("/api/style-profile", { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Couldn't delete style profile.");
+      setProfile(null);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't delete style profile.");
+    } finally {
+      setIsDeletingProfile(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Inspiration</h1>
@@ -74,14 +89,26 @@ export default function InspirationPage() {
         <div className="flex flex-col gap-2 rounded-lg border border-black/10 p-4 dark:border-white/10">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-medium">Your style profile</h2>
-            <button
-              type="button"
-              onClick={regenerateProfile}
-              disabled={isRegenerating}
-              className="rounded-md border border-black/10 px-3 py-1 text-xs disabled:opacity-50 dark:border-white/10"
-            >
-              {isRegenerating ? "Regenerating…" : "Regenerate"}
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={regenerateProfile}
+                disabled={isRegenerating}
+                className="rounded-md border border-black/10 px-3 py-1 text-xs disabled:opacity-50 dark:border-white/10"
+              >
+                {isRegenerating ? "Regenerating…" : "Regenerate"}
+              </button>
+              {images.length === 0 && (
+                <button
+                  type="button"
+                  onClick={handleDeleteProfile}
+                  disabled={isDeletingProfile}
+                  className="rounded-md border border-black/10 px-3 py-1 text-xs text-red-600 disabled:opacity-50 dark:border-white/10 dark:text-red-400"
+                >
+                  {isDeletingProfile ? "Deleting…" : "Delete profile"}
+                </button>
+              )}
+            </div>
           </div>
           <p className="text-sm">{profile.styleSummary}</p>
           <div className="flex flex-wrap gap-1">
