@@ -11,7 +11,7 @@ import { SEASONS, WARDROBE_CATEGORIES } from "@/lib/constants";
 // for literal vision tagging, a stronger model for creative reasoning.
 // Swap here if Google rotates model names again.
 //
-// Both roles run on flash-lite for now, not the plan's original Pro model:
+// Both roles run on flash-lite first, not the plan's original Pro model:
 // - vision: gemini-3.6-flash's free-tier quota is only 20 requests/day/model,
 //   which real testing exhausts almost immediately. flash-lite has a much
 //   more generous free quota and is exactly the "cheap, fast" tier the plan
@@ -20,9 +20,15 @@ import { SEASONS, WARDROBE_CATEGORIES } from "@/lib/constants";
 //   billing enabled on the Cloud project behind the API key. Using flash-lite
 //   here trades some reasoning quality for working without billing set up.
 //   Swap back to "gemini-3.1-pro-preview" once billing is enabled.
+//
+// Each role lists a fallback after flash-lite: flash-lite itself has been
+// observed returning 503 "high demand" on every single attempt for extended
+// stretches (not just an occasional transient blip), which would otherwise
+// block uploads entirely. generateJson() tries each model in order, retrying
+// with backoff within a model before moving to the next one.
 export const GEMINI_MODELS = {
-  vision: "gemini-3.1-flash-lite",
-  reasoning: "gemini-3.1-flash-lite",
+  vision: ["gemini-3.1-flash-lite", "gemini-3.6-flash"],
+  reasoning: ["gemini-3.1-flash-lite", "gemini-3.6-flash"],
 } as const;
 
 let client: GoogleGenAI | null = null;
@@ -105,52 +111,56 @@ function isTransientError(error: unknown): boolean {
 }
 
 async function generateJson<T>(params: {
-  model: string;
+  model: string | readonly string[];
   contents: ReturnType<typeof createUserContent>;
   temperature: number;
   jsonSchema: unknown;
 }): Promise<T> {
   const ai = getClient();
-  const maxAttempts = 3;
+  const models = Array.isArray(params.model) ? params.model : [params.model];
+  const maxAttemptsPerModel = 3;
   let lastError: unknown;
 
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    if (attempt > 0) {
-      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-    }
+  for (const model of models) {
+    for (let attempt = 0; attempt < maxAttemptsPerModel; attempt++) {
+      if (attempt > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+      }
 
-    let text: string | undefined;
-    try {
-      const response = await ai.models.generateContent({
-        model: params.model,
-        contents: params.contents,
-        config: {
-          temperature: params.temperature,
-          responseMimeType: "application/json",
-          responseJsonSchema: params.jsonSchema,
-        },
-      });
-      text = response.text;
-    } catch (error) {
-      lastError = error;
-      if (isTransientError(error)) continue;
-      throw error;
-    }
+      let text: string | undefined;
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: params.contents,
+          config: {
+            temperature: params.temperature,
+            responseMimeType: "application/json",
+            responseJsonSchema: params.jsonSchema,
+          },
+        });
+        text = response.text;
+      } catch (error) {
+        lastError = error;
+        console.error(`Gemini call to ${model} failed`, error);
+        if (isTransientError(error)) continue;
+        break; // non-transient: stop retrying this model, fall through to the next one
+      }
 
-    if (!text) {
-      lastError = new Error("Gemini returned an empty response");
-      continue;
-    }
+      if (!text) {
+        lastError = new Error("Gemini returned an empty response");
+        continue;
+      }
 
-    try {
-      return JSON.parse(text) as T;
-    } catch (error) {
-      lastError = error;
+      try {
+        return JSON.parse(text) as T;
+      } catch (error) {
+        lastError = error;
+      }
     }
   }
 
   throw new Error(
-    `Gemini call failed after ${maxAttempts} attempts: ${
+    `Gemini call failed after trying ${models.join(", ")}: ${
       lastError instanceof Error ? lastError.message : String(lastError)
     }`,
   );

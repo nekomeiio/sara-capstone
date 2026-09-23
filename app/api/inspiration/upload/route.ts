@@ -30,7 +30,8 @@ export async function POST(request: Request) {
   let extracted;
   try {
     extracted = await extractInspirationStyle(saved.buffer.toString("base64"), saved.mimeType);
-  } catch {
+  } catch (error) {
+    console.error("Inspiration image analysis failed", error);
     return NextResponse.json(
       { error: "Couldn't analyze this image. Please try again." },
       { status: 502 },
