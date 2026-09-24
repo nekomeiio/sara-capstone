@@ -74,9 +74,7 @@ export default function UploadDropzone({
             event.target.value = "";
           }}
         />
-        <p className="text-black/60 dark:text-white/60">
-          {isUploading ? "Analyzing image…" : label}
-        </p>
+        <p className="muted">{isUploading ? "Analyzing image…" : label}</p>
       </div>
     </div>
   );

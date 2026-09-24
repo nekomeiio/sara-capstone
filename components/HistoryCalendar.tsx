@@ -63,21 +63,13 @@ export default function HistoryCalendar({ wornOutfits, onDelete, onDaySelect }: 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={goToPreviousMonth}
-          className="rounded-md border border-black/10 px-2 py-1 text-sm dark:border-white/10"
-        >
+        <button type="button" onClick={goToPreviousMonth} className="btn-outline px-2 py-1 text-sm">
           ‹
         </button>
-        <span className="text-sm font-medium">
+        <span className="section-title">
           {new Date(year, month, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" })}
         </span>
-        <button
-          type="button"
-          onClick={goToNextMonth}
-          className="rounded-md border border-black/10 px-2 py-1 text-sm dark:border-white/10"
-        >
+        <button type="button" onClick={goToNextMonth} className="btn-outline px-2 py-1 text-sm">
           ›
         </button>
       </div>
@@ -116,9 +108,9 @@ export default function HistoryCalendar({ wornOutfits, onDelete, onDaySelect }: 
       </div>
 
       {selectedDateKey && (
-        <div className="flex flex-col gap-3 rounded-lg border border-black/10 p-3 dark:border-white/10">
+        <div className="card flex flex-col gap-3 p-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">
+            <h3 className="section-title">
               {localDateFromKey(selectedDateKey).toLocaleDateString(undefined, {
                 weekday: "long",
                 month: "long",

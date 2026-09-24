@@ -72,8 +72,8 @@ export default function LogWornOutfitForm({ dateWorn, onDateChange, onLogged }: 
   if (wardrobeItems.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-black/10 p-4 dark:border-white/10">
-      <h2 className="text-sm font-medium">Log a worn outfit</h2>
+    <div className="card flex flex-col gap-3">
+      <h2 className="section-title">† Log a worn outfit †</h2>
 
       <div className="flex flex-wrap gap-2">
         {wardrobeItems.map((item) => {
@@ -100,7 +100,7 @@ export default function LogWornOutfitForm({ dateWorn, onDateChange, onLogged }: 
             type="date"
             value={dateWorn}
             onChange={(e) => onDateChange(e.target.value)}
-            className="rounded-md border border-black/10 p-2 text-sm dark:border-white/10 dark:bg-neutral-800"
+            className="input-field"
           />
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm">
@@ -110,15 +110,10 @@ export default function LogWornOutfitForm({ dateWorn, onDateChange, onLogged }: 
             value={contextNote}
             onChange={(e) => setContextNote(e.target.value)}
             placeholder="e.g. date night"
-            className="rounded-md border border-black/10 p-2 text-sm dark:border-white/10 dark:bg-neutral-800"
+            className="input-field"
           />
         </label>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSaving}
-          className="rounded-md bg-black px-4 py-2 text-sm text-white disabled:opacity-50 dark:bg-white dark:text-black"
-        >
+        <button type="button" onClick={handleSubmit} disabled={isSaving} className="btn-solid">
           {isSaving ? "Saving…" : "Log outfit"}
         </button>
       </div>

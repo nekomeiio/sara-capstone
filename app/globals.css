@@ -10,6 +10,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-cormorant);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,7 +21,151 @@
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)),
+    url("/site-background.png");
+  background-repeat: no-repeat, no-repeat;
+  background-size: cover, cover;
+  background-position: center, left center;
+  background-attachment: fixed, fixed;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
+      url("/site-background.png");
+  }
+}
+
+/* Gothic-lace "frame" chrome: a white card floating over the dark lace
+   backdrop, bordered top/bottom by a striped trim bar, matching the
+   Neocities-style reference the user asked to match. */
+@layer components {
+  .site-frame {
+    @apply relative mx-auto w-full max-w-5xl overflow-hidden rounded-3xl bg-white;
+    box-shadow:
+      0 30px 90px rgba(0, 0, 0, 0.75),
+      0 0 0 1px rgba(0, 0, 0, 0.6),
+      0 0 0 2px rgba(214, 214, 214, 0.9);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .site-frame {
+      @apply bg-neutral-950;
+      box-shadow:
+        0 30px 90px rgba(0, 0, 0, 0.9),
+        0 0 0 1px rgba(255, 255, 255, 0.18),
+        0 0 0 2px rgba(214, 214, 214, 0.9);
+    }
+  }
+
+  .site-frame-trim {
+    height: 10px;
+    background-image: repeating-linear-gradient(
+      90deg,
+      #000 0px,
+      #000 3px,
+      #3a3a3a 3px,
+      #3a3a3a 6px
+    );
+  }
+
+  .site-frame-inner {
+    @apply w-full flex-1 px-4 py-8 sm:px-8;
+  }
+
+  .brand-title {
+    font-family: var(--font-display);
+    @apply text-4xl font-medium italic tracking-wide text-neutral-800 dark:text-neutral-100;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    @apply text-2xl font-medium italic tracking-wide text-neutral-800 dark:text-neutral-100;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    @apply text-sm font-semibold uppercase tracking-[0.2em] text-neutral-600 dark:text-neutral-300;
+  }
+
+  .landing-title {
+    font-family: var(--font-display);
+    @apply font-medium italic tracking-wide text-white;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.8);
+  }
+
+  .floating-decal {
+    animation: float 4s ease-in-out infinite;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5));
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-14px);
+    }
+  }
+
+  .btn-pill {
+    @apply rounded-full border border-neutral-400/60 px-11 py-2.5 text-lg font-semibold tracking-[0.1em] uppercase text-white/90 transition-colors;
+    font-family: var(--font-display);
+    background: linear-gradient(to bottom, #5a5a5a, #000 50%, #2c2c2c);
+    box-shadow:
+      0 4px 14px rgba(0, 0, 0, 0.45),
+      inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  }
+  .btn-pill:hover {
+    @apply text-white;
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.55),
+      inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  }
+  .btn-pill.is-active,
+  .btn-pill:active,
+  .btn-pill:focus-visible {
+    @apply text-white outline-none;
+    box-shadow:
+      inset 0 1px 4px rgba(0, 0, 0, 0.7),
+      0 0 0 3px rgba(255, 255, 255, 0.85);
+  }
+
+  .btn-solid {
+    @apply rounded-md px-4 py-2 text-sm transition-colors disabled:opacity-40 bg-black text-white dark:bg-white dark:text-black;
+  }
+  .btn-outline {
+    @apply rounded-md px-4 py-2 text-sm transition-colors disabled:opacity-40 border border-black/15 dark:border-white/15;
+  }
+  .btn-danger {
+    @apply rounded-md px-4 py-2 text-sm transition-colors disabled:opacity-40 border border-black/15 text-red-600 dark:border-white/15 dark:text-red-400;
+  }
+
+  .card {
+    @apply rounded-lg border border-black/10 p-4 dark:border-white/10;
+  }
+  .tile {
+    @apply flex flex-col gap-2 rounded-md border border-black/10 p-2 dark:border-white/10;
+  }
+  .thumb {
+    @apply relative aspect-square w-full overflow-hidden rounded-md bg-black/5 dark:bg-white/5;
+  }
+  .pill-tag {
+    @apply rounded-full bg-black/5 px-2 py-0.5 text-xs text-black/60 dark:bg-white/10 dark:text-white/60;
+  }
+  .muted {
+    @apply text-sm text-black/60 dark:text-white/60;
+  }
+  .muted-faint {
+    @apply text-sm text-black/40 dark:text-white/40;
+  }
+  .input-field {
+    @apply rounded-md border border-black/10 p-2 text-sm dark:border-white/10 dark:bg-neutral-800;
+  }
 }
