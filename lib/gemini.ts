@@ -235,10 +235,12 @@ The user's request: "${promptText}"
 
 Rules:
 - Choose item_ids ONLY from the "id" values in the wardrobe list above. Never invent an item or id.
-- Only use categories that actually exist in the wardrobe list — if there are no shoes listed, do not
-  suggest shoes.
-- Prefer a coherent, complete-feeling outfit (e.g. a top + bottom, or a dress, plus outerwear/shoes/
-  accessories if they fit and exist), but never fabricate items to fill a category.
+- Build a full outfit: include exactly one item each from the "top", "bottom", "accessory", and "shoes"
+  categories, as long as the wardrobe list above contains at least one item in that category. Only skip
+  one of these categories if the wardrobe list truly has zero items in it — never fabricate an item to
+  fill a category that doesn't exist.
+- You may add outerwear, a bag, or an extra accessory on top of those four categories if it fits the
+  request, but never at the expense of leaving out a required category that's actually available.
 - explanation should be 1-3 sentences addressing how the outfit fits the request.
 - confidence should reflect how well the available wardrobe actually matches the request.`;
 }
