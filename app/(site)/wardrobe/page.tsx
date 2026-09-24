@@ -46,7 +46,7 @@ export default function WardrobePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Wardrobe</h1>
+      <h1 className="page-title">Wardrobe</h1>
 
       <UploadDropzone
         endpoint="/api/wardrobe/upload"
@@ -57,19 +57,14 @@ export default function WardrobePage() {
       {listError && <p className="text-sm text-red-600 dark:text-red-400">{listError}</p>}
 
       {isLoading ? (
-        <p className="text-sm text-black/40 dark:text-white/40">Loading…</p>
+        <p className="muted-faint">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="text-sm text-black/40 dark:text-white/40">
-          No wardrobe items yet — upload a few photos to get started.
-        </p>
+        <p className="muted-faint">No wardrobe items yet — upload a few photos to get started.</p>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {items.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-col gap-2 rounded-md border border-black/10 p-2 dark:border-white/10"
-            >
-              <div className="relative aspect-square w-full overflow-hidden rounded-md bg-black/5 dark:bg-white/5">
+            <div key={item.id} className="tile">
+              <div className="thumb">
                 <Image
                   src={item.imageUrl}
                   alt={item.subcategory}
@@ -91,14 +86,14 @@ export default function WardrobePage() {
                 <button
                   type="button"
                   onClick={() => setEditingItem(item)}
-                  className="flex-1 rounded-md border border-black/10 px-2 py-1 text-xs dark:border-white/10"
+                  className="btn-outline flex-1 px-2 py-1 text-xs"
                 >
                   Edit
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDelete(item.id)}
-                  className="flex-1 rounded-md border border-black/10 px-2 py-1 text-xs text-red-600 dark:border-white/10 dark:text-red-400"
+                  className="btn-danger flex-1 px-2 py-1 text-xs"
                 >
                   Delete
                 </button>

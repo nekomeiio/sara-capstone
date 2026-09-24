@@ -56,7 +56,7 @@ export default function OutfitCard({
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-black/10 p-4 dark:border-white/10">
+    <div className="card flex flex-col gap-4">
       <div className="flex flex-wrap gap-3">
         {sortedItems.map((item) => (
           <div key={item.id} className="flex flex-col items-center gap-1">
@@ -71,9 +71,7 @@ export default function OutfitCard({
       <p className="text-sm">{explanation}</p>
 
       {(confidence || noveltyNote) && (
-        <span className="w-fit rounded-full bg-black/5 px-2 py-0.5 text-xs text-black/60 dark:bg-white/10 dark:text-white/60">
-          {confidence ? `Confidence: ${confidence}` : noveltyNote}
-        </span>
+        <span className="pill-tag w-fit">{confidence ? `Confidence: ${confidence}` : noveltyNote}</span>
       )}
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -83,16 +81,11 @@ export default function OutfitCard({
           type="button"
           onClick={handleMarkAsWorn}
           disabled={wornState !== "idle"}
-          className="flex-1 rounded-md border border-black/10 px-3 py-2 text-sm disabled:opacity-40 dark:border-white/10"
+          className="btn-outline flex-1"
         >
           {wornState === "done" ? "Marked as worn ✓" : wornState === "saving" ? "Saving…" : "Mark as Worn"}
         </button>
-        <button
-          type="button"
-          onClick={onRegenerate}
-          disabled={isRegenerating}
-          className="flex-1 rounded-md bg-black px-3 py-2 text-sm text-white disabled:opacity-50 dark:bg-white dark:text-black"
-        >
+        <button type="button" onClick={onRegenerate} disabled={isRegenerating} className="btn-solid flex-1">
           {isRegenerating ? "Regenerating…" : "Regenerate"}
         </button>
       </div>

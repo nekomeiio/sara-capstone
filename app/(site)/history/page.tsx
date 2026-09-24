@@ -39,7 +39,7 @@ export default function HistoryPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Worn history</h1>
+      <h1 className="page-title">Worn history</h1>
 
       <LogWornOutfitForm
         dateWorn={logDate}
@@ -48,11 +48,11 @@ export default function HistoryPage() {
       />
 
       {isLoading ? (
-        <p className="text-sm text-black/40 dark:text-white/40">Loading…</p>
+        <p className="muted-faint">Loading…</p>
       ) : (
         <>
           {wornOutfits.length === 0 && (
-            <p className="text-sm text-black/40 dark:text-white/40">
+            <p className="muted-faint">
               No worn outfits logged yet — log one above, or accept an AI suggestion, to start building
               your history.
             </p>

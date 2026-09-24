@@ -77,7 +77,7 @@ export default function InspirationPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Inspiration</h1>
+      <h1 className="page-title">Inspiration</h1>
 
       <UploadDropzone
         endpoint="/api/inspiration/upload"
@@ -86,15 +86,15 @@ export default function InspirationPage() {
       />
 
       {profile && (
-        <div className="flex flex-col gap-2 rounded-lg border border-black/10 p-4 dark:border-white/10">
+        <div className="card flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium">Your style profile</h2>
+            <h2 className="section-title">† Your style profile †</h2>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={regenerateProfile}
                 disabled={isRegenerating}
-                className="rounded-md border border-black/10 px-3 py-1 text-xs disabled:opacity-50 dark:border-white/10"
+                className="btn-outline px-3 py-1 text-xs"
               >
                 {isRegenerating ? "Regenerating…" : "Regenerate"}
               </button>
@@ -103,7 +103,7 @@ export default function InspirationPage() {
                   type="button"
                   onClick={handleDeleteProfile}
                   disabled={isDeletingProfile}
-                  className="rounded-md border border-black/10 px-3 py-1 text-xs text-red-600 disabled:opacity-50 dark:border-white/10 dark:text-red-400"
+                  className="btn-danger px-3 py-1 text-xs"
                 >
                   {isDeletingProfile ? "Deleting…" : "Delete profile"}
                 </button>
@@ -113,10 +113,7 @@ export default function InspirationPage() {
           <p className="text-sm">{profile.styleSummary}</p>
           <div className="flex flex-wrap gap-1">
             {profile.dominantAesthetics.map((aesthetic) => (
-              <span
-                key={aesthetic}
-                className="rounded-full bg-black/5 px-2 py-0.5 text-xs text-black/60 dark:bg-white/10 dark:text-white/60"
-              >
+              <span key={aesthetic} className="pill-tag">
                 {aesthetic}
               </span>
             ))}
@@ -125,26 +122,21 @@ export default function InspirationPage() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-black/40 dark:text-white/40">Loading…</p>
+        <p className="muted-faint">Loading…</p>
       ) : images.length === 0 ? (
-        <p className="text-sm text-black/40 dark:text-white/40">
-          No inspiration images yet — upload a few to build your style profile.
-        </p>
+        <p className="muted-faint">No inspiration images yet — upload a few to build your style profile.</p>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {images.map((image) => (
-            <div
-              key={image.id}
-              className="flex flex-col gap-2 rounded-md border border-black/10 p-2 dark:border-white/10"
-            >
-              <div className="relative aspect-square w-full overflow-hidden rounded-md bg-black/5 dark:bg-white/5">
+            <div key={image.id} className="tile">
+              <div className="thumb">
                 <Image src={image.imageUrl} alt={image.moodDescription} fill className="object-cover" />
               </div>
               <p className="text-xs text-black/60 dark:text-white/60">{image.aestheticLabels.join(", ")}</p>
               <button
                 type="button"
                 onClick={() => handleDelete(image.id)}
-                className="rounded-md border border-black/10 px-2 py-1 text-xs text-red-600 dark:border-white/10 dark:text-red-400"
+                className="btn-danger px-2 py-1 text-xs"
               >
                 Delete
               </button>

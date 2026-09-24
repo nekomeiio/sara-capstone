@@ -30,7 +30,8 @@ export async function POST(request: Request) {
   let tags;
   try {
     tags = await tagWardrobeItemImage(saved.buffer.toString("base64"), saved.mimeType);
-  } catch {
+  } catch (error) {
+    console.error("Wardrobe image tagging failed", error);
     return NextResponse.json(
       { error: "Couldn't analyze this image. Please try again." },
       { status: 502 },

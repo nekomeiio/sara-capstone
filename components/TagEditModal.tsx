@@ -17,8 +17,7 @@ function splitList(value: string): string[] {
     .filter(Boolean);
 }
 
-const inputClass =
-  "rounded-md border border-black/10 p-2 dark:border-white/10 dark:bg-neutral-800";
+const inputClass = "input-field";
 
 export default function TagEditModal({ item, onClose, onSaved }: TagEditModalProps) {
   const [category, setCategory] = useState(item.category);
@@ -76,7 +75,7 @@ export default function TagEditModal({ item, onClose, onSaved }: TagEditModalPro
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-6 dark:bg-neutral-900">
-        <h2 className="mb-4 text-lg font-semibold">Edit tags</h2>
+        <h2 className="page-title mb-4 text-lg">Edit tags</h2>
         <div className="flex flex-col gap-3 text-sm">
           <label className="flex flex-col gap-1">
             Category
@@ -165,20 +164,10 @@ export default function TagEditModal({ item, onClose, onSaved }: TagEditModalPro
         </div>
         {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSaving}
-            className="rounded-md border border-black/10 px-4 py-2 text-sm dark:border-white/10"
-          >
+          <button type="button" onClick={onClose} disabled={isSaving} className="btn-outline">
             Cancel
           </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="rounded-md bg-black px-4 py-2 text-sm text-white disabled:opacity-50 dark:bg-white dark:text-black"
-          >
+          <button type="button" onClick={handleSave} disabled={isSaving} className="btn-solid">
             {isSaving ? "Saving…" : "Save"}
           </button>
         </div>
